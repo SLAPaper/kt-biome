@@ -22,7 +22,9 @@ class MultimodalGuardPlugin(BasePlugin):
     description = "Rewrite multimodal LLM input into text-only placeholders"
 
     def __init__(self, options: dict[str, Any] | None = None):
-        opts = options or {}
+        super().__init__()
+        self.options = dict(options or {})
+        opts = self.options
         self._placeholder = (
             str(opts.get("placeholder", _PLACEHOLDER)).strip() or _PLACEHOLDER
         )

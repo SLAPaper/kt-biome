@@ -216,7 +216,9 @@ class FamilyGuidancePlugin(BasePlugin):
     priority = 30  # Runs before most transformers so later plugins see guidance.
 
     def __init__(self, options: dict[str, Any] | None = None):
-        opts = options or {}
+        super().__init__()
+        self.options = dict(options or {})
+        opts = self.options
         self._settings = _Settings(
             enabled=bool(opts.get("enabled", True)),
             include_defaults=bool(opts.get("include_defaults", True)),

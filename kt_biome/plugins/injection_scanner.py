@@ -184,7 +184,9 @@ class InjectionScannerPlugin(BasePlugin):
     description = "Scan tool results for prompt-injection patterns."
 
     def __init__(self, options: dict[str, Any] | None = None) -> None:
-        self._opts = _Options.from_dict(options)
+        super().__init__()
+        self.options = dict(options or {})
+        self._opts = _Options.from_dict(self.options)
         self._patterns: list[tuple[str, re.Pattern[str]]] = []
         self._compile_patterns()
         self._ctx: PluginContext | None = None

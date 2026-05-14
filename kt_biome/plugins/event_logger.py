@@ -34,7 +34,9 @@ class EventLoggerPlugin(BasePlugin):
     priority = 1  # First to observe
 
     def __init__(self, options: dict[str, Any] | None = None):
-        opts = options or {}
+        super().__init__()
+        self.options = dict(options or {})
+        opts = self.options
         self._log_path = Path(
             opts.get("path", Path.home() / ".kohakuterrarium" / "event_log.jsonl")
         )

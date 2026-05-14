@@ -147,7 +147,9 @@ class ContextFilesPlugin(BasePlugin):
     )
 
     def __init__(self, options: dict[str, Any] | None = None):
-        self._opts = _Options.from_dict(options)
+        super().__init__()
+        self.options = dict(options or {})
+        self._opts = _Options.from_dict(self.options)
         self._ctx: PluginContext | None = None
         self._patterns: list[re.Pattern[str]] = []
         self._compile_patterns()

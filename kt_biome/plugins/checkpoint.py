@@ -81,7 +81,9 @@ class CheckpointPlugin(BasePlugin):
     priority = 15  # Run before most plugins so snapshot is taken first.
 
     def __init__(self, options: dict[str, Any] | None = None) -> None:
-        opts = options or {}
+        super().__init__()
+        self.options = dict(options or {})
+        opts = self.options
 
         self._enabled: bool = bool(opts.get("enabled", True))
         self._backend: str = str(opts.get("backend", "git"))

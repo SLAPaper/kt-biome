@@ -15,7 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from kohakuterrarium.packages import install_package, resolve_package_prompt
+from kohakuterrarium.packages.install import install_package
+from kohakuterrarium.packages.slots import resolve_package_prompt
 from kohakuterrarium.prompt.template import render_template_safe
 
 KT_BIOME = Path(__file__).resolve().parents[2]
@@ -32,11 +33,11 @@ def kt_biome_installed(tmp_path, monkeypatch):
     """Install a copy of the kt-biome source tree into a throwaway
     packages dir so the real user install is untouched.
     """
-    import kohakuterrarium.packages as pkg_mod
+    from kohakuterrarium.packages import locations as pkg_locations
 
     packages_root = tmp_path / "packages"
     packages_root.mkdir()
-    monkeypatch.setattr(pkg_mod, "PACKAGES_DIR", packages_root)
+    monkeypatch.setattr(pkg_locations, "PACKAGES_DIR", packages_root)
 
     # Copy just the manifest + prompts + one creature — keeps the
     # copy small and independent of plugin Python deps that the

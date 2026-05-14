@@ -46,7 +46,9 @@ class CostTrackerPlugin(BasePlugin):
     priority = 10
 
     def __init__(self, options: dict[str, Any] | None = None):
-        opts = options or {}
+        super().__init__()
+        self.options = dict(options or {})
+        opts = self.options
         self._budget = float(opts.get("budget_usd", 0))
         self._warn_at = float(opts.get("warn_at", 0.8))
         self._stop_at_budget = bool(opts.get("stop_at_budget", True))
