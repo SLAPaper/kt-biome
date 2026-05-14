@@ -17,6 +17,9 @@ import pytest
 
 _mock_kt = ModuleType("kohakuterrarium")
 _mock_kt_modules: dict[str, ModuleType] = {}
+_created_mock_modules: set[str] = set()
+_missing = object()
+_patched_attrs: list[tuple[ModuleType, str, Any]] = []
 
 
 def _ensure_mod(dotted: str) -> ModuleType:
@@ -26,9 +29,15 @@ def _ensure_mod(dotted: str) -> ModuleType:
         if partial not in sys.modules:
             m = ModuleType(partial)
             sys.modules[partial] = m
+            _created_mock_modules.add(partial)
         if partial not in _mock_kt_modules:
             _mock_kt_modules[partial] = sys.modules[partial]
     return sys.modules[dotted]
+
+
+def _patch_attr(module: ModuleType, name: str, value: Any) -> None:
+    _patched_attrs.append((module, name, getattr(module, name, _missing)))
+    setattr(module, name, value)
 
 
 # BasePlugin and PluginContext — minimal stubs
@@ -37,19 +46,78 @@ class _BasePlugin:
     priority: int = 0
 
     def __init__(self, options=None):
-        pass
+        self.options = dict(options or {})
+
+    @classmethod
+    def option_schema(cls) -> dict[str, dict[str, Any]]:
+        return {}
+
+    def get_options(self) -> dict[str, Any]:
+        return dict(self.options)
+
+    def set_options(self, values: dict[str, Any]) -> dict[str, Any]:
+        self.options.update(values or {})
+        self.refresh_options()
+        return self.get_options()
+
+    def refresh_options(self) -> None:
+        return None
+
+
+class _PluginContext(SimpleNamespace):
+    def __init__(
+        self,
+        agent_name: str = "",
+        working_dir: Path | None = None,
+        session_id: str = "",
+        model: str = "",
+        _host_agent: Any = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(
+            agent_name=agent_name,
+            working_dir=working_dir,
+            session_id=session_id,
+            model=model,
+            _host_agent=_host_agent,
+            _state={},
+            **kwargs,
+        )
+
+    @property
+    def host_agent(self) -> Any:
+        return self._host_agent
+
+    @property
+    def scratchpad(self) -> Any:
+        return getattr(self._host_agent, "scratchpad", None)
+
+    @property
+    def session_store(self) -> Any:
+        return getattr(self._host_agent, "session_store", None)
+
+    def get_state(self, key: str) -> Any:
+        return self._state.get(key)
+
+    def set_state(self, key: str, value: Any) -> None:
+        self._state[key] = value
+
+    def inject_event(self, event: Any) -> None:
+        controller = getattr(self._host_agent, "controller", None)
+        if controller is not None and hasattr(controller, "push_event_sync"):
+            controller.push_event_sync(event)
 
 
 base_mod = _ensure_mod("kohakuterrarium.modules.plugin.base")
-base_mod.BasePlugin = _BasePlugin
-base_mod.PluginContext = SimpleNamespace
+_patch_attr(base_mod, "BasePlugin", _BasePlugin)
+_patch_attr(base_mod, "PluginContext", _PluginContext)
 
 plugin_pkg = _ensure_mod("kohakuterrarium.modules.plugin")
-plugin_pkg.BasePlugin = _BasePlugin
+_patch_attr(plugin_pkg, "BasePlugin", _BasePlugin)
 
 # kohakuterrarium.utils.logging
 logging_mod = _ensure_mod("kohakuterrarium.utils.logging")
-logging_mod.get_logger = lambda *a, **kw: MagicMock()
+_patch_attr(logging_mod, "get_logger", lambda *a, **kw: MagicMock())
 
 # Ensure top-level kohakuterrarium and all needed subpackages
 _ensure_mod("kohakuterrarium.modules")
@@ -80,8 +148,18 @@ for _blocked in [
         sys.modules[_blocked] = ModuleType(_blocked)
 
 # NOW import the module under test
-from kt_biome.plugins import otel_metrics as mod
-from kt_biome.plugins.otel_metrics import OTelMetricsPlugin
+from kt_biome.plugins import otel_metrics as mod  # noqa: E402
+from kt_biome.plugins.otel_metrics import OTelMetricsPlugin  # noqa: E402
+
+for module, attr, original in reversed(_patched_attrs):
+    if original is _missing:
+        delattr(module, attr)
+    else:
+        setattr(module, attr, original)
+for dotted in sorted(
+    _created_mock_modules, key=lambda item: item.count("."), reverse=True
+):
+    sys.modules.pop(dotted, None)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────

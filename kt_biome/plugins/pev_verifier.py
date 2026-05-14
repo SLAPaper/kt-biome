@@ -154,7 +154,9 @@ class PEVVerifierPlugin(BasePlugin):
     )
 
     def __init__(self, options: dict[str, Any] | None = None) -> None:
-        opts = options or {}
+        super().__init__()
+        self.options = dict(options or {})
+        opts = self.options
 
         self._criteria: list[str] = _coerce_str_list(opts.get("acceptance_criteria"))
         self._model: str = str(opts.get("model", "")) or "codex/gpt-5.4"

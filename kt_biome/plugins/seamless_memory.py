@@ -229,7 +229,9 @@ class SeamlessMemoryPlugin(BasePlugin):
     priority = 45
 
     def __init__(self, options: dict[str, Any] | None = None):
-        opts = options or {}
+        super().__init__()
+        self.options = dict(options or {})
+        opts = self.options
         self._model = opts.get("model", "openrouter/xiaomi/mimo-v2-flash")
         self._min_turns = int(opts.get("min_turns_before_active", 2))
 

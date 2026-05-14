@@ -104,7 +104,9 @@ class CircuitBreakerPlugin(BasePlugin):
     description = "Circuit breaker for repeatedly-failing tools."
 
     def __init__(self, options: dict[str, Any] | None = None) -> None:
-        opts = options or {}
+        super().__init__()
+        self.options = dict(options or {})
+        opts = self.options
         self._enabled: bool = bool(opts.get("enabled", True))
         self._half_open_trial: bool = bool(opts.get("half_open_trial", True))
         self._agent_names: list[str] = list(opts.get("agent_names") or [])
