@@ -1,5 +1,5 @@
 name: general
-version: "1.0"
+version: "1.1"
 
 controller:
   # LLM is resolved from: --llm flag > default model (kt model default) > inline config
@@ -8,44 +8,93 @@ controller:
 
 system_prompt_file: prompts/system.md
 skill_mode: dynamic
+skill_index_budget_bytes: 16384   # 16KB
 
 tools:
-  - { name: bash, type: builtin }
-  - { name: python, type: builtin }
-  - { name: read, type: builtin }
-  - { name: write, type: builtin }
-  - { name: edit, type: builtin }
-  - { name: multi_edit, type: builtin }
-  - { name: notebook_read, type: builtin }
-  - { name: notebook_edit, type: builtin }
-  - { name: glob, type: builtin }
-  - { name: grep, type: builtin }
-  - { name: tree, type: builtin }
-  - { name: scratchpad, type: builtin }
-  - { name: info, type: builtin }
-  - { name: ask_user, type: builtin }
-  - { name: json_read, type: builtin }
-  - { name: json_write, type: builtin }
-  - { name: send_message, type: builtin }
-  - { name: stop_task, type: builtin }
+  - name: bash
+    type: builtin
+  - name: python
+    type: builtin
+  - name: read
+    type: builtin
+  - name: write
+    type: builtin
+  - name: edit
+    type: builtin
+  - name: multi_edit
+    type: builtin
+  - name: notebook_read
+    type: builtin
+  - name: notebook_edit
+    type: builtin
+  - name: glob
+    type: builtin
+  - name: grep
+    type: builtin
+  - name: tree
+    type: builtin
+  - name: scratchpad
+    type: builtin
+  - name: info
+    type: builtin
+  - name: ask_user
+    type: builtin
+  - name: json_read
+    type: builtin
+  - name: json_write
+    type: builtin
+  - name: send_message
+    type: builtin
+  - name: stop_task
+    type: builtin
   # Setup-able triggers exposed as individual tools — calling one installs
   # the trigger in the background and returns its trigger_id. See
   # src/kohakuterrarium/modules/trigger/callable.py.
   # Note: watch_channel is omitted here — it is more terrarium-specific
   # and opt-in per-creature in the relevant team config.
-  - { name: add_timer, type: trigger }
-  - { name: add_schedule, type: trigger }
-  - { name: search_memory, type: builtin }
-  - { name: web_fetch, type: builtin }
-  - { name: web_search, type: builtin }
+  - name: add_timer
+    type: trigger
+  - name: add_schedule
+    type: trigger
+  - name: search_memory
+    type: builtin
+  - name: web_fetch
+    type: builtin
+  - name: web_search
+    type: builtin
+
+  - name: show_card
+    type: builtin
+  - name: skill
+    type: builtin
+  - name: skill_manage
+    type: package
+    module: kt_biome.tools.skill_manage
+    class: SkillManageTool
+  - name: skill_nudge
+    type: trigger
+    module: kt_biome.triggers.skill_nudge
+    class: SkillNudgeTrigger
 
 subagents:
-  - { name: explore, type: builtin }
-  - { name: plan, type: builtin }
-  - { name: worker, type: builtin }
-  - { name: critic, type: builtin }
-  - { name: summarize, type: builtin }
-  - { name: research, type: builtin }
+  - name: explore
+    type: builtin
+  - name: plan
+    type: builtin
+  - name: worker
+    type: builtin
+  - name: critic
+    type: builtin
+  - name: summarize
+    type: builtin
+  - name: research
+    type: builtin
+  - name: response
+    type: builtin
+  - name: memory_read
+    type: builtin
+  - name: memory_write
+    type: builtin
 
 # Default-enable every package-provided skill. Local skills under
 # ~/.kohakuterrarium/skills/, <cwd>/.kt/skills/, or the creature's own
@@ -84,10 +133,22 @@ plugins:
     module: kt_biome.plugins.family_guidance
     class: FamilyGuidancePlugin
 
-  - name: otel_metrics
-    module: kt_biome.plugins.otel_metrics
-    class: OTelMetricsPlugin
-
+  - name: circuit_breaker
+    type: package
+    module: kt_biome.plugins.circuit_breaker
+    class: CircuitBreakerPlugin
+  - name: cost_tracker
+    type: package
+    module: kt_biome.plugins.cost_tracker
+    class: CostTrackerPlugin
+  - name: injection_scanner
+    type: package
+    module: kt_biome.plugins.injection_scanner
+    class: InjectionScannerPlugin
+  - name: message_role_guard
+    type: package
+    module: kt_guard_plugin.plugins.guard
+    class: MessageRoleGuardPlugin
 output:
   type: stdout
   controller_direct: true
