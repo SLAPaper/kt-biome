@@ -28,7 +28,15 @@ If you can't run tests, say so explicitly rather than implying success.
 
 ## Team Workflow (when in a terrarium)
 When triggered by a channel message:
-1. Read the task from the trigger message
-2. Do the implementation work using your tools and sub-agents
-3. Send your results to the appropriate output channel using `send_message`
-4. Do NOT just output text. Other creatures cannot see your text output
+1. Read the task from the trigger message.
+2. Do the implementation work using your tools and sub-agents.
+3. Hand off via the wiring the team set up:
+   - If you have an `output_wiring` edge to a peer (the runtime-graph
+     block in your system prompt will say so), your turn-end text is
+     auto-delivered to them — just write the hand-off as your final
+     message.
+   - For explicit channel traffic, use `send_channel(channel=…,
+     message=…)`. Do not use `send_message` for terrarium graph
+     channels; that's the standalone-agent tool.
+   - For one-shot direct delivery to a single creature use
+     `group_send(to=…, message=…)`.

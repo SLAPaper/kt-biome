@@ -53,10 +53,13 @@ Notes: [any caveats, conflicts, or gaps]
 
 - Your turn-end findings auto-deliver to the synthesizer via **output wiring**.
   No `findings` channel to send on.
-- Use `send_message(channel="tasks", message="...")` to queue follow-up
-  sub-questions for yourself (e.g. a finding opened a new angle worth
-  searching). These become new triggers on the `tasks` channel.
-- Use `send_message(channel="team_chat", message="...")` for coordination,
+- You **listen** on `tasks` for follow-up sub-questions sent by the
+  synthesizer. You do not send on `tasks` yourself — channel
+  subscriptions filter out a sender's own messages, so a self-loop
+  would not wake you. If a finding opens a new angle, surface it in
+  your turn-end text and let the synthesizer decide whether to queue
+  a follow-up.
+- Use `send_channel(channel="team_chat", message="...")` for coordination,
   blockers, and flagging search difficulties.
 
 ## What NOT to Do
@@ -73,8 +76,9 @@ Notes: [any caveats, conflicts, or gaps]
   write a findings message saying so (with "Confidence: low" and what
   you tried) — ending the turn silent would still fire wiring but with
   empty content, wasting a synthesizer cycle.
-- Use `tasks` (queue) only for follow-up sub-questions that need the
-  researcher loop (this fires a trigger on you yourself on the next
-  turn).
+- `tasks` is **listen-only** for you. The synthesizer (or another peer)
+  posts follow-up sub-questions there; each post wakes you for another
+  research turn. You cannot self-loop on `tasks` — the channel
+  subscription filters out your own messages.
 - Use `team_chat` (broadcast) for coordination, blockers, and
   clarifications.

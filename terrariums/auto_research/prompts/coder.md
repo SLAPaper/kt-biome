@@ -50,7 +50,7 @@ minimal code changes and report readiness. You also handle revert requests.
 - Your turn-end text auto-delivers to the runner via **output wiring**.
   For the "ready" hand-off, just write the ready summary as your final
   message and end the turn.
-- Use `send_message(channel="team_chat", message="...")` for
+- Use `send_channel(channel="team_chat", message="...")` for
   clarifications, status pings, and revert confirmations (broadcast).
 - No `experiments` channel to send on anymore — wiring handles it.
 

@@ -45,7 +45,6 @@ After installation, package paths look like:
 - `@kt-biome/creatures/general`
 - `@kt-biome/creatures/swe`
 - `@kt-biome/terrariums/swe_team`
-- `@kt-biome/terrariums/ralph_loop`
 
 ## Quick start
 
@@ -150,26 +149,6 @@ There is intentionally no single global `root` creature shipped as a reusable pa
 - `pair_programming` — a driver/navigator pair using two `swe` instances
 - `auto_research` — a multi-step research pipeline over `general` creatures
 - `deep_research` — planner/researcher/synthesizer/critic pipeline
-- `ralph_loop` — an autonomous initializer/worker loop modeled after the Ralph workflow
-
-### The Ralph loop
-
-`ralph_loop` is the most opinionated terrarium in the package.
-
-It uses two creatures:
-
-- `ralph_initializer` — runs once, scaffolds `AGENTS.md`, `progress.md`, and `NOTES.md`, commits them, then exits
-- `ralph_worker` — wakes repeatedly from the `work-log` channel, completes one checkbox item per turn, commits, and posts status back to the same channel
-
-Use it when you want a long-running autonomous implementation loop with durable on-disk task tracking.
-
-Run it with:
-
-```bash
-kt terrarium run @kt-biome/terrariums/ralph_loop/
-```
-
-Then give the initial goal as your first prompt.
 
 ## Plugins
 

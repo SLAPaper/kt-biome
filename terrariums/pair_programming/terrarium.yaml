@@ -34,15 +34,8 @@ terrarium:
     system_prompt_file: prompts/root.md
     controller:
       tool_format: native
-    tools:
-      - { name: terrarium_create, type: builtin }
-      - { name: terrarium_status, type: builtin }
-      - { name: terrarium_stop, type: builtin }
-      - { name: terrarium_send, type: builtin }
-      - { name: terrarium_observe, type: builtin }
-      - { name: terrarium_history, type: builtin }
-      - { name: creature_start, type: builtin }
-      - { name: creature_stop, type: builtin }
+    # Privileged group_* tools are force-registered on the root by the
+    # engine — no explicit ``tools:`` block needed here.
 
   creatures:
     - name: driver
@@ -74,7 +67,7 @@ terrarium:
         can_send: [feedback, pair_chat]
 
   channels:
-    tasks:     { type: queue,     description: "Incoming coding tasks from root to the driver" }
-    feedback:  { type: queue,     description: "Navigator's review comments and verdicts back to driver" }
-    results:   { type: queue,     description: "Final, navigator-approved output (root auto-observes)" }
-    pair_chat: { type: broadcast, description: "Strategic coordination between driver, navigator, and root" }
+    tasks:     { description: "Incoming coding tasks from root to the driver" }
+    feedback:  { description: "Navigator's review comments and verdicts back to driver" }
+    results:   { description: "Final, navigator-approved output (root auto-observes)" }
+    pair_chat: { description: "Strategic coordination between driver, navigator, and root" }

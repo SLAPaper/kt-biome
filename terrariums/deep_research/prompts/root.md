@@ -15,7 +15,7 @@ synthesizer → `tasks` for follow-up sub-questions).
 
 ## Delegate, don't do
 
-- New research questions → `terrarium_send(channel="questions", ...)`.
+- New research questions → `send_channel(channel="questions", ...)`.
   The planner listens there.
 - Do not search, synthesise, or critique yourself. Your value is
   orchestration and user-facing communication.

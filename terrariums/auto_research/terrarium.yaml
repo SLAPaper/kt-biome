@@ -36,15 +36,8 @@ terrarium:
     system_prompt_file: prompts/root.md
     controller:
       tool_format: native
-    tools:
-      - { name: terrarium_create, type: builtin }
-      - { name: terrarium_status, type: builtin }
-      - { name: terrarium_stop, type: builtin }
-      - { name: terrarium_send, type: builtin }
-      - { name: terrarium_observe, type: builtin }
-      - { name: terrarium_history, type: builtin }
-      - { name: creature_start, type: builtin }
-      - { name: creature_stop, type: builtin }
+    # Privileged group_* tools are force-registered on the root by the
+    # engine — no explicit ``tools:`` block needed here.
 
   creatures:
     - name: ideator
@@ -92,7 +85,7 @@ terrarium:
         can_send: [feedback, reverts, team_chat]
 
   channels:
-    goals:      { type: queue,     description: "Research goals from root" }
-    feedback:   { type: queue,     description: "Analyzer -> ideator (keep-path feedback)" }
-    reverts:    { type: queue,     description: "Analyzer -> coder (discard-path revert requests)" }
-    team_chat:  { type: broadcast, description: "Cross-creature status + strategic coordination" }
+    goals:      { description: "Research goals from root" }
+    feedback:   { description: "Analyzer -> ideator (keep-path feedback)" }
+    reverts:    { description: "Analyzer -> coder (discard-path revert requests)" }
+    team_chat:  { description: "Cross-creature status + strategic coordination" }

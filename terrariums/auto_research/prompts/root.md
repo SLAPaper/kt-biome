@@ -15,7 +15,7 @@ Output wiring carries the linear pipeline (ideator → coder → runner
 
 ## Delegate, don't do
 
-- Research goals → `terrarium_send(channel="goals", ...)`. The
+- Research goals → `send_channel(channel="goals", ...)`. The
   ideator listens there.
 - Do not propose, code, run, or analyse yourself. Your value is
   orchestration and user-facing communication.

@@ -31,15 +31,8 @@ terrarium:
     system_prompt_file: prompts/root.md
     controller:
       tool_format: native
-    tools:
-      - { name: terrarium_create, type: builtin }
-      - { name: terrarium_status, type: builtin }
-      - { name: terrarium_stop, type: builtin }
-      - { name: terrarium_send, type: builtin }
-      - { name: terrarium_observe, type: builtin }
-      - { name: terrarium_history, type: builtin }
-      - { name: creature_start, type: builtin }
-      - { name: creature_stop, type: builtin }
+    # Privileged group_* tools are force-registered on the root by the
+    # engine — no explicit ``tools:`` block needed here.
 
   creatures:
     - name: planner
@@ -59,10 +52,11 @@ terrarium:
         - synthesizer
         - { to: root, with_content: false }
       channels:
-        # `tasks` self-loop lets the researcher queue follow-up
-        # sub-questions (e.g. when a finding reveals new angles).
+        # The researcher listens on ``tasks`` for follow-up sub-questions
+        # from the synthesizer. It does NOT self-loop — channel
+        # subscriptions filter out a sender's own messages.
         listen: [tasks, team_chat]
-        can_send: [tasks, team_chat]
+        can_send: [team_chat]
 
     - name: synthesizer
       base_config: "@kt-biome/creatures/general"
@@ -87,8 +81,12 @@ terrarium:
         can_send: [feedback, final, team_chat]
 
   channels:
-    questions: { type: queue,     description: "Research questions from root" }
-    tasks:     { type: queue,     description: "Sub-questions (researcher self-loop + synthesizer follow-ups)" }
-    feedback:  { type: queue,     description: "Critic -> planner (gap reports)" }
-    final:     { type: queue,     description: "Final approved reports" }
-    team_chat: { type: broadcast, description: "Cross-creature coordination" }
+    questions: { description: "Research questions from root" }
+    # ``tasks`` carries synthesizer follow-up sub-questions to the
+    # researcher.  Researcher sends here too, but self-broadcasts are
+    # filtered at the channel layer, so this is NOT a researcher
+    # self-loop — only synthesizer drives the researcher via tasks.
+    tasks:     { description: "Sub-questions (synthesizer -> researcher)" }
+    feedback:  { description: "Critic -> planner (gap reports)" }
+    final:     { description: "Final approved reports" }
+    team_chat: { description: "Cross-creature coordination" }
