@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Discussions
+    url: https://github.com/Kohaku-Lab/kt-biome/discussions
+    about: Ask questions or discuss new paradigms before implementation
+  - name: KohakuTerrarium framework issues
+    url: https://github.com/Kohaku-Lab/KohakuTerrarium/issues
+    about: Report framework bugs that are not specific to kt-biome package content

@@ -1,0 +1,135 @@
+name: New Paradigm / Feature Proposal
+description: Propose a new kt-biome creature, terrarium, module, skill, or major behavior change
+labels: ["enhancement", "needs-discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        `kt-biome` is the official package. New non-bugfix content should be discussed before implementation so contributors and maintainers do not waste time on work that does not fit the package scope.
+
+        The bar is not "this is useful to me". The bar is: this implements or teaches a reusable agent-system paradigm.
+
+  - type: dropdown
+    id: contribution-kind
+    attributes:
+      label: Contribution kind
+      description: What are you proposing to add or change?
+      options:
+        - Creature
+        - Terrarium
+        - Plugin
+        - Tool
+        - Trigger
+        - Skill bundle
+        - I/O module
+        - Prompt/config behavior
+        - Documentation for an official paradigm
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the proposed addition in 2-5 sentences.
+      placeholder: "I propose adding ..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: justification-type
+    attributes:
+      label: Paradigm justification
+      description: Which acceptance path best describes this proposal?
+      options:
+        - Derived from an existing popular agent/product paradigm
+        - Concrete implementation of an agent paper or well-known technique
+        - New pattern that needs maintainer discussion/design
+        - Broadly reusable cross-cutting module
+        - Not sure / I want help classifying it
+    validations:
+      required: true
+
+  - type: textarea
+    id: source
+    attributes:
+      label: Source paradigm, product, paper, or prior discussion
+      description: Link and explain the source this is derived from. For new patterns, link the discussion or describe what needs to be discussed.
+      placeholder: |
+        - Product / framework / common workflow:
+        - Paper / blog / technique:
+        - Prior issue/discussion:
+    validations:
+      required: true
+
+  - type: textarea
+    id: users
+    attributes:
+      label: Who is this for?
+      description: Explain who would use this besides the original author and why it belongs in the official biome instead of a separate package.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-shape
+    attributes:
+      label: Proposed package shape
+      description: List new public paths, modules, config names, channels, tools, options, or inheritance relationships.
+      placeholder: |
+        Public paths:
+        - @kt-biome/creatures/...
+        - @kt-biome/terrariums/...
+
+        Python modules:
+        - kt_biome.plugins....
+
+        Base configs / wiring:
+        - inherits from @kt-biome/creatures/general
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: paradigm-contract
+    attributes:
+      label: Paradigm contract
+      description: What behavior or workflow must this encode? Include role contracts, communication rules, output formats, or sentinels if relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Could this be a downstream package, docs-only recipe, example, plugin option, or prompt override instead?
+
+  - type: textarea
+    id: maintenance
+    attributes:
+      label: Maintenance impact
+      description: What dependencies, APIs, services, models, or framework features does this rely on? What could break over time?
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: What tests, examples, or manual runs would prove the implementation works?
+      placeholder: |
+        - Unit tests:
+        - Config loading checks:
+        - Manual `kt run` / `kt terrarium run` scenario:
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Proposal checklist
+      options:
+        - label: I understand new non-bugfix content should be discussed before implementation.
+          required: true
+        - label: I explained the reusable paradigm, product, paper, or pattern behind this proposal.
+          required: true
+        - label: I considered whether this belongs in a separate package instead of kt-biome.
+          required: true

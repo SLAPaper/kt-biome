@@ -1,0 +1,112 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in kt-biome
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug in `kt-biome`.
+
+        Bug fixes can be opened directly as PRs. Please include enough detail for maintainers to reproduce the issue with the same creature, terrarium, plugin, tool, trigger, skill, or I/O module.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of kt-biome is affected?
+      options:
+        - Creature config / prompt
+        - Terrarium config / prompt
+        - Plugin
+        - Tool
+        - Trigger
+        - Skill bundle
+        - I/O module
+        - Package manifest / install
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: package-path
+    attributes:
+      label: Package path or module
+      description: If applicable, name the public path or Python module.
+      placeholder: "@kt-biome/creatures/swe, @kt-biome/terrariums/deep_research, kt_biome.plugins.checkpoint"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect to happen?
+      placeholder: Describe the bug...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce this?
+      placeholder: |
+        1. Install kt-biome with `kt install ...`
+        2. Run `kt run @kt-biome/creatures/swe`
+        3. Send "..."
+        4. Observe that...
+    validations:
+      required: true
+
+  - type: textarea
+    id: minimal-config
+    attributes:
+      label: Minimal config / prompt / command
+      description: Paste the smallest config, prompt fragment, or command that demonstrates the issue.
+      render: yaml
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or error messages
+      description: Paste any tracebacks, CLI output, tool errors, or channel messages.
+      render: text
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / recordings
+      description: Drag and drop screenshots here, paste image links, or add short recordings.
+
+  - type: input
+    id: kt-version
+    attributes:
+      label: KohakuTerrarium version
+      description: Output of `kt --version` or `pip show kohakuterrarium`.
+      placeholder: "1.0.0b8"
+    validations:
+      required: true
+
+  - type: input
+    id: biome-version
+    attributes:
+      label: kt-biome version / commit
+      description: Package version, `kt list` output, or commit SHA.
+      placeholder: "kt-biome 1.2.0 / commit abc1234"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS / Platform
+      placeholder: "Windows 11 / macOS 15 / Ubuntu 24.04"
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12 / 3.13"
+    validations:
+      required: true
