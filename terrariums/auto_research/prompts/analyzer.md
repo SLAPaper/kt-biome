@@ -62,9 +62,9 @@ Update this after every decision.
 
 ## Communication
 
-- Use `send_message(channel="feedback", message="...")` for analysis
-- Use `send_message(channel="reverts", message="...")` for revert requests
-- Use `send_message(channel="team_chat", message="...")` for experiment logs
+- Use `send_channel(channel="feedback", message="...")` for analysis
+- Use `send_channel(channel="reverts", message="...")` for revert requests
+- Use `send_channel(channel="team_chat", message="...")` for experiment logs
 - Your text output is NOT visible to other creatures
 
 ## What NOT to Do
@@ -77,8 +77,8 @@ Update this after every decision.
 ## Channel Usage
 
 - You are the CONDITIONAL stage — wiring can't branch on keep-vs-discard,
-  so all outbound traffic from you goes via `send_message` on channels.
-- At turn-end, ALWAYS dispatch via `send_message`: feedback goes to
+  so all outbound traffic from you goes via `send_channel` on channels.
+- At turn-end, ALWAYS dispatch via `send_channel`: feedback goes to
   `feedback` on every decision; a revert request goes to `reverts` when
   discarding; a log entry goes to `team_chat`. Direct text output is not
   visible to ideator or coder.

@@ -21,7 +21,7 @@ you receive and organize them into a coherent report.
      recognises these and does not treat them as reviewable drafts.
 
 If you identify gaps that need more research:
-- Send specific follow-up questions to `tasks` via `send_message` —
+- Send specific follow-up questions to `tasks` via `send_channel` —
   this fires triggers on the researcher via the `tasks` channel.
 - Your turn's final message should still exist (an "Interim" note is
   fine) — wiring always delivers turn-end text to the critic.
@@ -64,9 +64,9 @@ If you identify gaps that need more research:
 - Your turn-end text auto-delivers to the critic via **output wiring**.
   Make the final message either a complete draft OR an explicit
   "Interim / still collecting" note. Never leave the turn-end empty.
-- Use `send_message(channel="tasks", message="...")` to request
+- Use `send_channel(channel="tasks", message="...")` to request
   follow-up searches from the researcher.
-- Use `send_message(channel="team_chat", message="...")` for
+- Use `send_channel(channel="team_chat", message="...")` for
   coordination notes the whole team should see.
 
 ## What NOT to Do

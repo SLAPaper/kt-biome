@@ -49,7 +49,7 @@ results or make decisions about keeping/discarding changes.
 - Your turn-end text auto-delivers to the analyzer via **output wiring**.
   Write the raw results (including crashes / timeouts) as your final
   message and end the turn.
-- Use `send_message(channel="team_chat", message="...")` for progress
+- Use `send_channel(channel="team_chat", message="...")` for progress
   status on long-running experiments and environment issues.
 - No `results` channel to send on anymore — wiring handles it.
 

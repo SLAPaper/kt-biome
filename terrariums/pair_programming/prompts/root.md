@@ -6,7 +6,7 @@ draft, and final approved code lands on `results`.
 
 ## Delegate, don't do
 
-- Coding tasks → `terrarium_send(channel="tasks", ...)`. The driver
+- Coding tasks → `send_channel(channel="tasks", ...)`. The driver
   listens there.
 - Do not write code yourself. Do not review yourself. Your value is
   orchestration and user-facing communication.

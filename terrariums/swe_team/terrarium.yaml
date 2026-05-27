@@ -28,18 +28,10 @@ terrarium:
     controller:
       reasoning_effort: high
       tool_format: native
-    # The framework force-injects the terrarium_* / creature_* toolset on
-    # any root agent regardless of this list; declaring them here makes
-    # the tools appear in the auto-generated prompt tool listing.
-    tools:
-      - { name: terrarium_create, type: builtin }
-      - { name: terrarium_status, type: builtin }
-      - { name: terrarium_stop, type: builtin }
-      - { name: terrarium_send, type: builtin }
-      - { name: terrarium_observe, type: builtin }
-      - { name: terrarium_history, type: builtin }
-      - { name: creature_start, type: builtin }
-      - { name: creature_stop, type: builtin }
+    # Privileged group_* tools (group_status / group_add_node /
+    # group_channel / group_wire / group_send / send_channel ...) are
+    # force-registered on every root by the engine — no explicit
+    # ``tools:`` block needed here.
 
   creatures:
     - name: swe
@@ -71,7 +63,7 @@ terrarium:
         can_send: [feedback, results, team_chat]
 
   channels:
-    tasks:     { type: queue,     description: "Incoming task assignments" }
-    feedback:  { type: queue,     description: "Reviewer -> swe (revision requests)" }
-    results:   { type: queue,     description: "Final approved results (from reviewer)" }
-    team_chat: { type: broadcast, description: "Team coordination and status" }
+    tasks:     { description: "Incoming task assignments" }
+    feedback:  { description: "Reviewer -> swe (revision requests)" }
+    results:   { description: "Final approved results (from reviewer)" }
+    team_chat: { description: "Team coordination and status" }

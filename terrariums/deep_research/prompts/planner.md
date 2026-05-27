@@ -29,9 +29,9 @@ When feedback arrives on the `feedback` channel from the critic:
 ## Communication
 
 - Your turn-end text (the numbered list of sub-questions) auto-delivers
-  to the researcher via **output wiring**. No send_message needed for
+  to the researcher via **output wiring**. No `send_channel` needed for
   the hand-off.
-- Use `send_message(channel="team_chat", message="...")` for coordination
+- Use `send_channel(channel="team_chat", message="...")` for coordination
   and status notes that the broader team should see.
 
 ## What NOT to Do
@@ -39,7 +39,7 @@ When feedback arrives on the `feedback` channel from the critic:
 - Do NOT search the web yourself — the researcher handles that
 - Do NOT write reports or synthesize — the synthesizer handles that
 - Do NOT answer the research question directly
-- Do NOT call `send_message` for the sub-questions — just write them
+- Do NOT call `send_channel` for the sub-questions — just write them
   as your final numbered-list message (wiring handles delivery)
 - Do NOT wait for results before you've emitted all your sub-questions
 

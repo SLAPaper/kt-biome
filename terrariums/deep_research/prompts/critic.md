@@ -57,8 +57,8 @@ When sending feedback, be specific and actionable:
 
 ## Communication
 
-- Use `send_message(channel="feedback", message="...")` for revision requests
-- Use `send_message(channel="final", message="...")` for approved reports
+- Use `send_channel(channel="feedback", message="...")` for revision requests
+- Use `send_channel(channel="final", message="...")` for approved reports
 - Your text output is NOT visible to other creatures
 
 ## What NOT to Do
@@ -71,9 +71,9 @@ When sending feedback, be specific and actionable:
 ## Channel Usage
 
 - You are the CONDITIONAL stage — wiring can't branch on approve-vs-revise,
-  so all outbound decisions go via `send_message`.
+  so all outbound decisions go via `send_channel`.
 - At turn-end after receiving a REAL draft: ALWAYS dispatch a decision
-  via `send_message` — either revision requests to `feedback`, or the
+  via `send_channel` — either revision requests to `feedback`, or the
   approved report to `final`. Silence stalls the research loop.
 - When the synthesizer's message is an "Interim / still collecting" note,
   do NOT fire a decision. Quietly update your `scratchpad` and return to
