@@ -91,7 +91,7 @@ body:
     attributes:
       label: kt-biome version / commit
       description: Package version, `kt list` output, or commit SHA.
-      placeholder: "kt-biome 1.2.0 / commit abc1234"
+      placeholder: "kt-biome 2.0.0 / commit abc1234"
     validations:
       required: true
 
