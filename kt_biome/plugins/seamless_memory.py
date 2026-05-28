@@ -26,12 +26,11 @@ import asyncio
 import time
 from typing import Any
 
-from kohakuterrarium.core.agent import Agent
-from kohakuterrarium.core.config_types import AgentConfig
 from kohakuterrarium.core.events import EventType, TriggerEvent
 from kohakuterrarium.modules.plugin.base import BasePlugin, PluginContext
+from kohakuterrarium.modules.subagent.base import SubAgent
+from kohakuterrarium.modules.subagent.config import SubAgentConfig
 from kohakuterrarium.modules.tool.base import BaseTool, ExecutionMode, ToolResult
-from kohakuterrarium.serving.agent_session import AgentSession
 from kohakuterrarium.session.embedding import create_embedder
 from kohakuterrarium.session.memory import SessionMemory
 from kohakuterrarium.utils.logging import get_logger
@@ -234,8 +233,8 @@ class SeamlessMemoryPlugin(BasePlugin):
         self._min_turns = int(opts.get("min_turns_before_active", 2))
 
         self._ctx: PluginContext | None = None
-        self._read_agent: AgentSession | None = None
-        self._write_agent: AgentSession | None = None
+        self._read_agent: SubAgent | None = None
+        self._write_agent: SubAgent | None = None
         self._session_memory: SessionMemory | None = None
         self._turn_count = 0
 
@@ -250,9 +249,6 @@ class SeamlessMemoryPlugin(BasePlugin):
         logger.info("Seamless memory loaded", model=self._model)
 
     async def on_unload(self) -> None:
-        for agent in (self._read_agent, self._write_agent):
-            if agent:
-                await agent.stop()
         self._read_agent = None
         self._write_agent = None
 
@@ -275,7 +271,7 @@ class SeamlessMemoryPlugin(BasePlugin):
 
     # ── Programmatic agent creation ──────────────────────────────────
 
-    async def _get_read_agent(self) -> AgentSession:
+    async def _get_read_agent(self) -> SubAgent:
         if self._read_agent is None:
             self._read_agent = await self._create_agent(
                 "seamless-reader",
@@ -288,7 +284,7 @@ class SeamlessMemoryPlugin(BasePlugin):
             )
         return self._read_agent
 
-    async def _get_write_agent(self) -> AgentSession:
+    async def _get_write_agent(self) -> SubAgent:
         if self._write_agent is None:
             self._write_agent = await self._create_agent(
                 "seamless-writer",
@@ -299,25 +295,49 @@ class SeamlessMemoryPlugin(BasePlugin):
 
     async def _create_agent(
         self, name: str, prompt: str, tools: list[BaseTool]
-    ) -> AgentSession:
-        """Build an agent entirely from code — no config files."""
-        config = AgentConfig(name=name)
-        config.model = self._model
-        config.system_prompt = prompt
-        config.tool_format = "native"
-        config.tools = []
-        config.subagents = []
-        config.include_tools_in_prompt = True
-        config.include_hints_in_prompt = True
-        config.max_messages = 6
-        config.ephemeral = True
+    ) -> SubAgent:
+        """Build a plugin-private child runner using sub-agent plumbing.
 
-        agent = Agent(config)
-        for tool in tools:
-            agent.registry.register_tool(tool)
-        agent.set_output_handler(lambda _: None, replace_default=True)
-        await agent.start()
-        return AgentSession(agent)
+        Modules do not own sessions.  If the host has a SessionStore, the
+        SubAgent records through that store exactly like configured
+        sub-agents do: parent injects the store, child saves its run.
+        """
+        if self._ctx is None or self._ctx.host_agent is None:
+            raise RuntimeError("seamless_memory child agent requires PluginContext")
+
+        host = self._ctx.host_agent
+        parent_llm = getattr(host, "llm", None)
+        if parent_llm is None:
+            raise RuntimeError("seamless_memory child agent requires host LLM")
+
+        llm = _child_llm(parent_llm, self._model, name)
+        config = SubAgentConfig(
+            name=name,
+            description="Plugin-private seamless memory helper",
+            tools=[tool.tool_name for tool in tools],
+            system_prompt=prompt,
+            max_turns=3,
+            model=self._model,
+            tool_format="native",
+            budget_inherit=False,
+        )
+        registry = _PluginChildRegistry(tools)
+        agent = SubAgent(
+            config=config,
+            parent_registry=registry,
+            llm=llm,
+            agent_path=self._ctx.working_dir,
+            tool_format="native",
+        )
+        parent_executor = getattr(host, "executor", None)
+        if parent_executor is not None:
+            agent._build_tool_context = parent_executor._build_tool_context
+
+        store = self._ctx.session_store
+        if store is not None:
+            agent._session_store = store
+            agent._parent_name = self._ctx.agent_name
+        return agent
 
     # ── Tool callbacks ───────────────────────────────────────────────
 
@@ -448,12 +468,25 @@ class SeamlessMemoryPlugin(BasePlugin):
 
     # ── Internal ─────────────────────────────────────────────────────
 
-    async def _run_agent(self, agent: AgentSession, context: str, phase: str) -> None:
+    async def _run_agent(self, agent: SubAgent, context: str, phase: str) -> None:
         try:
-            async for _ in agent.chat(f"[{phase}] Current conversation:\n{context}"):
-                pass
+            self._prepare_child_run(agent)
+            prompt = f"[{phase}] Current conversation:" + "\n" + context
+            await agent.run(prompt)
         except Exception as e:
             logger.debug("Memory agent error", phase=phase, error=str(e))
+
+    def _prepare_child_run(self, agent: SubAgent) -> None:
+        if self._ctx is None:
+            return
+        store = self._ctx.session_store
+        if store is None:
+            return
+        agent._session_store = store
+        agent._parent_name = self._ctx.agent_name
+        agent._run_index = store.next_subagent_run(
+            self._ctx.agent_name, agent.config.name
+        )
 
     def _flush_injections(self, messages: list[dict]) -> list[dict] | None:
         items = list(self._pending_injections)
@@ -471,6 +504,31 @@ class SeamlessMemoryPlugin(BasePlugin):
                 break
         modified.insert(insert_idx, {"role": "system", "content": "\n".join(lines)})
         return modified
+
+
+class _PluginChildRegistry:
+    """Minimal parent-registry surface consumed by SubAgent."""
+
+    def __init__(self, tools: list[BaseTool]) -> None:
+        self._tools = {tool.tool_name: tool for tool in tools}
+
+    def get_tool(self, tool_name: str) -> BaseTool | None:
+        return self._tools.get(tool_name)
+
+
+def _child_llm(parent_llm: Any, model: str, name: str) -> Any:
+    if not model:
+        return parent_llm
+    try:
+        return parent_llm.with_model(model)
+    except Exception as exc:
+        logger.warning(
+            "Seamless memory child model override failed; inheriting host LLM",
+            child=name,
+            model=model,
+            error=str(exc),
+        )
+        return parent_llm
 
 
 # =====================================================================

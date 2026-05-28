@@ -40,12 +40,11 @@ from typing import Any
 from kohakuterrarium.builtins.tools.bash import BashTool
 from kohakuterrarium.builtins.tools.grep import GrepTool
 from kohakuterrarium.builtins.tools.read import ReadTool
-from kohakuterrarium.core.agent import Agent
-from kohakuterrarium.core.config_types import AgentConfig
 from kohakuterrarium.core.events import EventType, TriggerEvent
 from kohakuterrarium.modules.plugin.base import BasePlugin, PluginContext
+from kohakuterrarium.modules.subagent.base import SubAgent
+from kohakuterrarium.modules.subagent.config import SubAgentConfig
 from kohakuterrarium.modules.tool.base import BaseTool, ExecutionMode, ToolResult
-from kohakuterrarium.serving.agent_session import AgentSession
 from kohakuterrarium.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -182,7 +181,7 @@ class PEVVerifierPlugin(BasePlugin):
             logger.warning("PEV verifier has no acceptance_criteria; plugin disabled")
 
         self._ctx: PluginContext | None = None
-        self._verifier: AgentSession | None = None
+        self._verifier: SubAgent | None = None
         self._round_count: int = 0
         self._in_flight: bool = False
         # Verdict capture slot — overwritten on each verifier run.
@@ -202,12 +201,7 @@ class PEVVerifierPlugin(BasePlugin):
         )
 
     async def on_unload(self) -> None:
-        if self._verifier is not None:
-            try:
-                await self._verifier.stop()
-            except Exception as exc:
-                logger.debug("PEV verifier stop failed", error=str(exc))
-            self._verifier = None
+        self._verifier = None
 
     # ── should_apply ─────────────────────────────────────────────────
 
@@ -292,8 +286,8 @@ class PEVVerifierPlugin(BasePlugin):
         )
 
         try:
-            async for _ in verifier.chat(prompt):
-                pass  # Drain stream; verdict captured via tool callback.
+            self._prepare_verifier_run(verifier)
+            await verifier.run(prompt)  # Verdict captured via tool callback.
         except Exception as exc:
             logger.warning("PEV verifier run errored", error=str(exc))
             return
@@ -320,7 +314,7 @@ class PEVVerifierPlugin(BasePlugin):
             )
             self._inject_feedback(issues)
 
-    async def _ensure_verifier(self) -> AgentSession | None:
+    async def _ensure_verifier(self) -> SubAgent | None:
         if self._verifier is not None:
             return self._verifier
         try:
@@ -334,27 +328,61 @@ class PEVVerifierPlugin(BasePlugin):
             )
             return None
 
-    async def _create_verifier(self) -> AgentSession:
-        """Build the verifier Agent programmatically — no config files."""
-        config = AgentConfig(
-            name=f"pev-verifier-{self._ctx.agent_name if self._ctx else 'anon'}"
-        )
-        config.model = self._model
-        config.system_prompt = "(set per-call via chat prompt)"
-        config.tool_format = "native"
-        config.tools = []
-        config.subagents = []
-        config.include_tools_in_prompt = True
-        config.include_hints_in_prompt = True
-        config.max_messages = 20
-        config.ephemeral = True
+    async def _create_verifier(self) -> SubAgent:
+        """Build the verifier through sub-agent-style child plumbing.
 
-        agent = Agent(config)
-        for tool in self._build_verifier_tools():
-            agent.registry.register_tool(tool)
-        agent.set_output_handler(lambda _: None, replace_default=True)
-        await agent.start()
-        return AgentSession(agent)
+        Modules do not create sessions.  The host injects session access;
+        when a SessionStore exists, verifier runs are saved via the same
+        ``save_subagent`` path used by configured sub-agents.
+        """
+        if self._ctx is None or self._ctx.host_agent is None:
+            raise RuntimeError("PEV verifier requires PluginContext")
+
+        host = self._ctx.host_agent
+        parent_llm = getattr(host, "llm", None)
+        if parent_llm is None:
+            raise RuntimeError("PEV verifier requires host LLM")
+
+        name = f"pev-verifier-{self._ctx.agent_name if self._ctx else 'anon'}"
+        tools = self._build_verifier_tools()
+        config = SubAgentConfig(
+            name=name,
+            description="Plugin-private independent verifier",
+            tools=[tool.tool_name for tool in tools],
+            system_prompt="You are a verifier. Follow the user task exactly.",
+            max_turns=5,
+            model=self._model,
+            tool_format="native",
+            budget_inherit=False,
+        )
+        verifier = SubAgent(
+            config=config,
+            parent_registry=_PluginChildRegistry(tools),
+            llm=_child_llm(parent_llm, self._model, name),
+            agent_path=self._ctx.working_dir,
+            tool_format="native",
+        )
+        parent_executor = getattr(host, "executor", None)
+        if parent_executor is not None:
+            verifier._build_tool_context = parent_executor._build_tool_context
+
+        store = self._ctx.session_store
+        if store is not None:
+            verifier._session_store = store
+            verifier._parent_name = self._ctx.agent_name
+        return verifier
+
+    def _prepare_verifier_run(self, verifier: SubAgent) -> None:
+        if self._ctx is None:
+            return
+        store = self._ctx.session_store
+        if store is None:
+            return
+        verifier._session_store = store
+        verifier._parent_name = self._ctx.agent_name
+        verifier._run_index = store.next_subagent_run(
+            self._ctx.agent_name, verifier.config.name
+        )
 
     _TOOL_FACTORIES: dict[str, Any] = {
         "read": ReadTool,
@@ -437,6 +465,31 @@ class PEVVerifierPlugin(BasePlugin):
         if len(serialized) > max_chars:
             serialized = serialized[:max_chars] + "\n... (truncated)"
         return serialized
+
+
+class _PluginChildRegistry:
+    """Minimal parent-registry surface consumed by SubAgent."""
+
+    def __init__(self, tools: list[BaseTool]) -> None:
+        self._tools = {tool.tool_name: tool for tool in tools}
+
+    def get_tool(self, tool_name: str) -> BaseTool | None:
+        return self._tools.get(tool_name)
+
+
+def _child_llm(parent_llm: Any, model: str, name: str) -> Any:
+    if not model:
+        return parent_llm
+    try:
+        return parent_llm.with_model(model)
+    except Exception as exc:
+        logger.warning(
+            "PEV verifier model override failed; inheriting host LLM",
+            child=name,
+            model=model,
+            error=str(exc),
+        )
+        return parent_llm
 
 
 # =====================================================================
