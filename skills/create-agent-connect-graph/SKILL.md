@@ -5,6 +5,7 @@ license: KohakuTerrarium License 1.0
 paths:
   - "creatures/**/config.yaml"
   - "creatures/**/prompts/*.md"
+  - "creatures/**/*.py"
   - "terrariums/**/*.yaml"
   - "kohaku.yaml"
 ---
@@ -48,6 +49,10 @@ creatures/<slug>/
   memory/              # optional
   tools/               # optional custom Python tools
   subagents/           # optional custom sub-agent modules/configs
+  plugins/             # optional lifecycle/prompt plugins
+  triggers/            # optional custom triggers
+  inputs/              # optional custom input modules
+  outputs/             # optional custom output modules
 ```
 
 Minimal inherited creature:
@@ -87,6 +92,151 @@ tools:
 memory:
   folder: memory/
 ```
+
+### Custom modules inside the creature folder
+
+A custom agent often needs code, not just a prompt. Put module files under the
+creature folder and reference them with `module: ./relative/path.py`. The path
+is resolved relative to `creatures/<slug>/`, not the repository root. Use the
+YAML key `class` for tools, plugins, inputs, outputs, and triggers; custom
+sub-agent config modules use `config: <EXPORTED_CONFIG_NAME>`.
+
+#### Custom tool
+
+Use a tool when the LLM should explicitly call a capability by name.
+
+```python
+# creatures/<slug>/tools/project_lookup.py
+from kohakuterrarium.modules.tool.base import BaseTool, ToolContext, ToolResult
+
+
+class ProjectLookupTool(BaseTool):
+    needs_context = True
+
+    @property
+    def tool_name(self) -> str:
+        return "project_lookup"
+
+    @property
+    def description(self) -> str:
+        return "Look up project-specific facts for this worker."
+
+    async def _execute(
+        self,
+        args: dict,
+        *,
+        context: ToolContext | None = None,
+    ) -> ToolResult:
+        key = args.get("key", "")
+        # context.working_dir, context.session, context.environment, etc.
+        return ToolResult(output=f"No project fact registered for {key!r}.")
+```
+
+```yaml
+# creatures/<slug>/config.yaml
+tools:
+  - name: project_lookup
+    type: custom
+    module: ./tools/project_lookup.py
+    class: ProjectLookupTool
+```
+
+#### Custom sub-agent available only inside this creature
+
+Use a sub-agent when the new creature needs private vertical delegation. This
+is not a graph peer and does not need `group_*` wiring.
+
+```python
+# creatures/<slug>/subagents/domain_review.py
+from kohakuterrarium.modules.subagent.config import SubAgentConfig
+
+DOMAIN_REVIEW = SubAgentConfig(
+    name="domain_review",
+    description="Private domain review helper.",
+    system_prompt="Review the input for domain-specific issues. Return bullets.",
+    tools=["read", "grep"],
+    interactive=False,
+    can_modify=False,
+)
+```
+
+```yaml
+subagents:
+  - name: domain_review
+    type: custom
+    module: ./subagents/domain_review.py
+    config: DOMAIN_REVIEW
+```
+
+#### Custom plugin
+
+Use a plugin when the behavior should run around LLM/tool/sub-agent calls
+instead of being invoked as a tool.
+
+```python
+# creatures/<slug>/plugins/task_header.py
+from kohakuterrarium.modules.plugin.base import BasePlugin
+
+
+class TaskHeaderPlugin(BasePlugin):
+    name = "task_header"
+
+    def __init__(self, header: str = ""):
+        super().__init__()
+        self.header = header
+
+    def get_content(self, context) -> str | None:
+        if not self.header:
+            return None
+        return f"## Worker routing note\n\n{self.header}"
+```
+
+```yaml
+plugins:
+  - name: task_header
+    type: custom
+    module: ./plugins/task_header.py
+    class: TaskHeaderPlugin
+    options:
+      header: "Use the review-results channel for final replies."
+```
+
+#### Custom trigger/input/output modules
+
+Only add these when the creature has its own event source or output sink. Most
+runtime graph workers should communicate through terrarium channels instead.
+
+```yaml
+triggers:
+  - name: domain_timer
+    type: custom
+    module: ./triggers/domain_timer.py
+    class: DomainTimerTrigger
+    options: { interval: 300 }
+    prompt: "Check for stale assigned work."
+
+input:
+  type: custom
+  module: ./inputs/queue_input.py
+  class: QueueInput
+  options: { path: ./tasks.jsonl }
+
+output:
+  type: custom
+  module: ./outputs/report_file.py
+  class: ReportFileOutput
+  options: { path: ./worker-output.md }
+```
+
+Custom module checklist:
+
+- import from `kohakuterrarium.modules.*` protocols; do not edit framework
+  source;
+- keep imports at module top level unless an optional dependency must be lazy;
+- pass behavior knobs via `options:` instead of hardcoding secrets;
+- if a tool mutates shared state unsafely, set `is_concurrency_safe = False`;
+- if custom dependencies are needed, package them in a real package rather than
+  relying on ad-hoc `sys.path` hacks.
 
 ## 2. Write the system prompt
 
