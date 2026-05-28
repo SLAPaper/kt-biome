@@ -186,6 +186,10 @@ skills:
     path: skills/todo-file
     description: "Maintain a user-visible todo.md / plan.md across multiple turns. Activates on todo.md / plan.md paths."
 
+  - name: create-agent-connect-graph
+    path: skills/create-agent-connect-graph
+    description: "Create a custom creature folder and connect it into the active terrarium graph with group tools."
+
 triggers:
   - name: webhook
     module: kt_biome.triggers.webhook

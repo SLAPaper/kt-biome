@@ -200,6 +200,7 @@ Because `general` declares `skills: ["*"]`, package-provided skills are enabled 
 - `git-commit-flow` — safe commit workflow for source-code changes
 - `pdf-merge` — merge, split, or reorder PDFs with required page-count verification
 - `todo-file` — maintain a user-visible `todo.md` / `plan.md` task list across turns
+- `create-agent-connect-graph` — author a custom creature folder, spawn it, and wire it into a terrarium graph
 
 These can be invoked in three ways:
 
