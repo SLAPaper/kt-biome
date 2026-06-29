@@ -120,6 +120,10 @@ plugins:
     type: package
     module: kt_guard_plugin.plugins.guard
     class: MessageRoleGuardPlugin
+  - name: history_guard
+    type: package
+    module: kt_guard_plugin.plugins.history_guard
+    class: HistoryGuardPlugin
 output:
   type: stdout
   controller_direct: true
