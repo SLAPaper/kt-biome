@@ -36,13 +36,7 @@ tools:
   - { name: web_fetch, type: builtin }
   - { name: web_search, type: builtin }
 
-subagents:
-  - { name: explore, type: builtin }
-  - { name: plan, type: builtin }
-  - { name: worker, type: builtin }
-  - { name: critic, type: builtin }
-  - { name: summarize, type: builtin }
-  - { name: research, type: builtin }
+subagents: []
 
 # Default-enable every package-provided skill. Local skills under
 # ~/.kohakuterrarium/skills/, <cwd>/.kt/skills/, or the creature's own
