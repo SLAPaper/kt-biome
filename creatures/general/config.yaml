@@ -71,25 +71,7 @@ tools:
     class: SkillNudgeTrigger
   - name: image_gen
     type: builtin
-subagents:
-  - name: explore
-    type: builtin
-  - name: plan
-    type: builtin
-  - name: worker
-    type: builtin
-  - name: critic
-    type: builtin
-  - name: summarize
-    type: builtin
-  - name: research
-    type: builtin
-  - name: response
-    type: builtin
-  - name: memory_read
-    type: builtin
-  - name: memory_write
-    type: builtin
+subagents: []
 skills:
   - '*'
 plugins:
