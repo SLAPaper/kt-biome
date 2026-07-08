@@ -8,6 +8,7 @@ controller:
 
 system_prompt_file: prompts/system.md
 skill_mode: dynamic
+skill_index_budget_bytes: 16384   # 16KB
 
 tools:
   - { name: bash, type: builtin }
