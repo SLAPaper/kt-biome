@@ -35,6 +35,7 @@ tools:
   - { name: search_memory, type: builtin }
   - { name: web_fetch, type: builtin }
   - { name: web_search, type: builtin }
+  - { name: image_gen, type: builtin }
 
 subagents: []
 
