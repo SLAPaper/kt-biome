@@ -84,6 +84,11 @@ plugins:
     module: kt_biome.plugins.otel_metrics
     class: OTelMetricsPlugin
 
+  - name: history_guard
+    type: package
+    module: kt_guard_plugin.plugins.history_guard
+    class: HistoryGuardPlugin
+
 output:
   type: stdout
   controller_direct: true
