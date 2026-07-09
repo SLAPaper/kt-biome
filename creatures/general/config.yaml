@@ -42,6 +42,10 @@ subagents:
   - { name: critic, type: builtin }
   - { name: summarize, type: builtin }
   - { name: research, type: builtin }
+  - { name: coordinator, type: builtin }
+  - { name: memory_read, type: builtin }
+  - { name: memory_write, type: builtin }
+  - { name: response, type: builtin }
 
 # Default-enable every package-provided skill. Local skills under
 # ~/.kohakuterrarium/skills/, <cwd>/.kt/skills/, or the creature's own
