@@ -1,0 +1,44 @@
+name: summoner
+version: "1.0"
+
+base_config: "@kt-biome/creatures/general"
+
+system_prompt_file: prompts/system.md
+skill_mode: dynamic
+
+controller:
+  tool_format: native
+  reasoning_effort: high
+
+tools:
+  - name: group_add_node
+    type: builtin
+  - name: group_channel
+    type: builtin
+  - name: group_kill_node
+    type: builtin
+  - name: group_pause_node
+    type: builtin
+  - name: group_remove_node
+    type: builtin
+  - name: group_resume_node
+    type: builtin
+  - name: group_send
+    type: builtin
+  - name: group_spawn_child
+    type: builtin
+  - name: group_start_node
+    type: builtin
+  - name: group_status
+    type: builtin
+  - name: group_stop_node
+    type: builtin
+  - name: group_wire
+    type: builtin
+
+subagents: []
+
+output:
+  type: stdout
+  controller_direct: true
+description: Able to summon new creatures
