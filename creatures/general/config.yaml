@@ -75,18 +75,6 @@ plugins:
     module: kt_biome.plugins.context_files
     class: ContextFilesPlugin
 
-  # Inject model-family-specific system-prompt guidance (OpenAI/Codex
-  # vs Gemini/Gemma idioms). Pure pre_llm_call addition — no runtime
-  # cost, no behavior surprises.
-  - name: family_guidance
-    type: package
-    module: kt_biome.plugins.family_guidance
-    class: FamilyGuidancePlugin
-
-  - name: otel_metrics
-    module: kt_biome.plugins.otel_metrics
-    class: OTelMetricsPlugin
-
 output:
   type: stdout
   controller_direct: true
